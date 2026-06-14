@@ -16,8 +16,7 @@ body {
 }
 
 body {
-  /* Warm neutral backdrop so the iOS device frame reads as a presentation shell. */
-  background: #d8d4cc;
+  background: #0A0A0A;
 }
 
 #root {
