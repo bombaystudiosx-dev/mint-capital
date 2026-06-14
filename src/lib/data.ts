@@ -86,11 +86,11 @@ export const DB: DBApi = {
 };
 
 export function initData(): void {
-  if (!DB.get<Card[]>(KEYS.CARDS)) DB.set(KEYS.CARDS, DEFAULT_CARDS);
-  if (!DB.get<Tx[]>(KEYS.TRANSACTIONS)) DB.set(KEYS.TRANSACTIONS, DEFAULT_TXS);
-  if (!DB.get<Recipient[]>(KEYS.RECIPIENTS)) DB.set(KEYS.RECIPIENTS, DEFAULT_RCPTS);
-  if (!DB.get<Notif[]>(KEYS.NOTIFS)) DB.set(KEYS.NOTIFS, DEFAULT_NOTIFS);
-  if (DB.get<number>(KEYS.BALANCE) == null) DB.set(KEYS.BALANCE, 24850.0);
+  if (!DB.get<Card[]>(KEYS.CARDS)) DB.set(KEYS.CARDS, []);
+  if (!DB.get<Tx[]>(KEYS.TRANSACTIONS)) DB.set(KEYS.TRANSACTIONS, []);
+  if (!DB.get<Recipient[]>(KEYS.RECIPIENTS)) DB.set(KEYS.RECIPIENTS, []);
+  if (!DB.get<Notif[]>(KEYS.NOTIFS)) DB.set(KEYS.NOTIFS, []);
+  if (DB.get<number>(KEYS.BALANCE) == null) DB.set(KEYS.BALANCE, 0);
 }
 
 // ── Auth ─────────────────────────────────────────────────────
@@ -111,7 +111,6 @@ export const Auth = {
     if (u) {
       DB.set(KEYS.AUTHED, true);
       DB.set(KEYS.USER, u);
-      initData();
       return { ok: true };
     }
     return { ok: false, error: 'Invalid email or password' };
@@ -134,12 +133,12 @@ export const Auth = {
 
 // ── Bank API ─────────────────────────────────────────────────
 export const BankAPI = {
-  getBalance: (): number => DB.get<number>(KEYS.BALANCE, 24850.0),
-  getCards: (): Card[] => DB.get<Card[]>(KEYS.CARDS, DEFAULT_CARDS),
-  getTransactions: (): Tx[] => DB.get<Tx[]>(KEYS.TRANSACTIONS, DEFAULT_TXS),
-  getRecipients: (): Recipient[] => DB.get<Recipient[]>(KEYS.RECIPIENTS, DEFAULT_RCPTS),
-  getNotifications: (): Notif[] => DB.get<Notif[]>(KEYS.NOTIFS, DEFAULT_NOTIFS),
-  getUnread: (): number => DB.get<Notif[]>(KEYS.NOTIFS, DEFAULT_NOTIFS).filter((n) => !n.read).length,
+  getBalance: (): number => DB.get<number>(KEYS.BALANCE, 0),
+  getCards: (): Card[] => DB.get<Card[]>(KEYS.CARDS, []),
+  getTransactions: (): Tx[] => DB.get<Tx[]>(KEYS.TRANSACTIONS, []),
+  getRecipients: (): Recipient[] => DB.get<Recipient[]>(KEYS.RECIPIENTS, []),
+  getNotifications: (): Notif[] => DB.get<Notif[]>(KEYS.NOTIFS, []),
+  getUnread: (): number => DB.get<Notif[]>(KEYS.NOTIFS, []).filter((n) => !n.read).length,
 
   sendMoney: (recipient: Recipient, amount: number, note = ''): Tx => {
     const tx: Tx = {

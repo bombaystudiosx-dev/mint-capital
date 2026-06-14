@@ -3,9 +3,9 @@
 
 import { useEffect, useState } from 'react';
 import { T } from '../theme';
-import { Auth, BankAPI, F, DEFAULT_CARDS } from '../lib/data';
+import { Auth, BankAPI, F } from '../lib/data';
 import { Icon } from '../components/Icon';
-import { SectionHeader, Spinner, TxItem, BalanceCard } from '../components/ui';
+import { SectionHeader, Spinner, TxItem, BalanceCard, Btn } from '../components/ui';
 import type { Card, Tx, Notif, ScreenProps } from '../types';
 
 // ── Home ──────────────────────────────────────────────────────
@@ -33,8 +33,10 @@ export function HomeScreen({ navigate }: ScreenProps) {
   if (!data) return <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spinner /></div>;
 
   const { user, balance, cards, txs, unread } = data;
-  const card = cards[0] || DEFAULT_CARDS[0];
+  const card = cards[0];
   const firstName = (user?.name || '').split(' ')[0];
+
+  const hasCard = cards.length > 0;
 
   const allTxs = BankAPI.getTransactions();
   const now = new Date();
@@ -84,9 +86,20 @@ export function HomeScreen({ navigate }: ScreenProps) {
         <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 500, color: T.muted, letterSpacing: 1, textTransform: 'uppercase' }}>Total Balance</p>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 20 }}>
           <span style={{ fontSize: 36, fontWeight: 800, color: T.text, letterSpacing: -1 }}>{F.money(balance)}</span>
-          <span style={{ fontSize: 13, color: T.success, fontWeight: 600, background: T.successLight, padding: '2px 8px', borderRadius: 6 }}>+2.4%</span>
+          {balance > 0 && <span style={{ fontSize: 13, color: T.success, fontWeight: 600, background: T.successLight, padding: '2px 8px', borderRadius: 6 }}>+2.4%</span>}
         </div>
-        <BalanceCard card={card} onClick={() => navigate('wallet', {}, 'forward')} />
+        {hasCard ? (
+          <BalanceCard card={card!} onClick={() => navigate('wallet', {}, 'forward')} />
+        ) : (
+          <div style={{ background: T.surface, borderRadius: 24, padding: '40px 20px', textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+            <div style={{ marginBottom: 16 }}>
+              <Icon name="card" size={40} color={T.accent} />
+            </div>
+            <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700, color: T.text }}>No cards yet</h3>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: T.muted }}>Add your first card to get started</p>
+            <Btn variant="primary" size="sm" fullWidth onClick={() => navigate('wallet', {}, 'forward')}>Add Card</Btn>
+          </div>
+        )}
       </div>
 
       <div style={{ padding: '24px 24px 0' }}>
@@ -155,11 +168,12 @@ export function WalletScreen({ navigate }: ScreenProps) {
   const [cards, setCards] = useState<Card[]>(BankAPI.getCards());
   const [selIdx, setSelIdx] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
-  const selCard = cards[selIdx] || cards[0];
+  const selCard = cards[selIdx];
 
   const recentTxs = BankAPI.getTransactions().slice(0, 5);
 
   const freeze = () => {
+    if (!selCard) return;
     const updated = BankAPI.toggleFreezeCard(selCard.id);
     setCards(updated);
     setToast(updated[selIdx].frozen ? 'Card frozen' : 'Card unfrozen');
@@ -182,62 +196,75 @@ export function WalletScreen({ navigate }: ScreenProps) {
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: T.text, letterSpacing: -0.4 }}>My Cards</h2>
       </div>
 
-      <div style={{ paddingTop: 20, paddingBottom: 8 }}>
-        <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingLeft: 24, paddingRight: 24, scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
-          {cards.map((card, i) => (
-            <div key={card.id} onClick={() => setSelIdx(i)} style={{ scrollSnapAlign: 'start', transition: 'opacity 0.2s', opacity: selIdx === i ? 1 : 0.65 }}>
-              <BalanceCard card={card} />
-            </div>
-          ))}
-          <div style={{ scrollSnapAlign: 'start', width: 338, height: 213, borderRadius: 24, border: `2px dashed ${T.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, flexShrink: 0, cursor: 'pointer', background: T.surface }}>
-            <div style={{ width: 44, height: 44, borderRadius: 14, background: T.accentLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="plus" size={22} color={T.accent} />
-            </div>
-            <span style={{ fontSize: 14, fontWeight: 500, color: T.muted }}>Add new card</span>
+      {cards.length === 0 ? (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 24px' }}>
+          <div style={{ marginBottom: 16 }}>
+            <Icon name="card" size={48} color={T.accent} />
           </div>
+          <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: T.text, textAlign: 'center' }}>No cards added yet</h3>
+          <p style={{ margin: '0 0 24px', fontSize: 14, color: T.muted, textAlign: 'center', maxWidth: 280 }}>Add your first card to start managing your finances</p>
+          <Btn variant="primary" onClick={() => {}}>Add Your First Card</Btn>
         </div>
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', paddingTop: 14 }}>
-          {cards.map((_, i) => (
-            <div key={i} style={{ width: i === selIdx ? 20 : 6, height: 6, borderRadius: 3, background: i === selIdx ? T.accent : T.border, transition: 'all 0.3s ease', cursor: 'pointer' }} onClick={() => setSelIdx(i)} />
-          ))}
-        </div>
-      </div>
+      ) : (
+        <>
+          <div style={{ paddingTop: 20, paddingBottom: 8 }}>
+            <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingLeft: 24, paddingRight: 24, scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
+              {cards.map((card, i) => (
+                <div key={card.id} onClick={() => setSelIdx(i)} style={{ scrollSnapAlign: 'start', transition: 'opacity 0.2s', opacity: selIdx === i ? 1 : 0.65 }}>
+                  <BalanceCard card={card} />
+                </div>
+              ))}
+              <div style={{ scrollSnapAlign: 'start', width: 338, height: 213, borderRadius: 24, border: `2px dashed ${T.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, flexShrink: 0, cursor: 'pointer', background: T.surface }}>
+                <div style={{ width: 44, height: 44, borderRadius: 14, background: T.accentLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="plus" size={22} color={T.accent} />
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 500, color: T.muted }}>Add new card</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 6, justifyContent: 'center', paddingTop: 14 }}>
+              {cards.map((_, i) => (
+                <div key={i} style={{ width: i === selIdx ? 20 : 6, height: 6, borderRadius: 3, background: i === selIdx ? T.accent : T.border, transition: 'all 0.3s ease', cursor: 'pointer' }} onClick={() => setSelIdx(i)} />
+              ))}
+            </div>
+          </div>
 
-      {selCard && (
-        <div style={{ margin: '8px 24px 0', background: T.surface, borderRadius: 20, padding: '18px 18px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ margin: '0 0 4px', fontSize: 12, color: T.muted, letterSpacing: 0.5, textTransform: 'uppercase' }}>Card Balance</p>
-            <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: T.text, letterSpacing: -0.5 }}>{F.money(selCard.balance)}</p>
+          {selCard && (
+            <div style={{ margin: '8px 24px 0', background: T.surface, borderRadius: 20, padding: '18px 18px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ margin: '0 0 4px', fontSize: 12, color: T.muted, letterSpacing: 0.5, textTransform: 'uppercase' }}>Card Balance</p>
+                <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: T.text, letterSpacing: -0.5 }}>{F.money(selCard.balance)}</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ margin: '0 0 4px', fontSize: 12, color: T.muted }}>Card name</p>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: T.text }}>{selCard.name}</p>
+              </div>
+            </div>
+          )}
+
+          <div style={{ margin: '16px 24px 0' }}>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {cardActions.map((a) => (
+                <button key={a.label} onClick={a.onClick} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, background: T.surface, border: 'none', borderRadius: 16, padding: '14px 8px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.2)', WebkitTapHighlightColor: 'transparent' }}>
+                  <Icon name={a.icon} size={20} color={T.accent} />
+                  <span style={{ fontSize: 11, fontWeight: 500, color: T.muted }}>{a.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: '0 0 4px', fontSize: 12, color: T.muted }}>Card name</p>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: T.text }}>{selCard.name}</p>
+
+          <div style={{ padding: '20px 24px 0' }}>
+            <SectionHeader title="Card Activity" action="All" onAction={() => navigate('transactions', {}, 'forward')} />
+            <div style={{ background: T.surface, borderRadius: 20, padding: '4px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+              {recentTxs.map((tx, i) => (
+                <div key={tx.id}>
+                  <TxItem tx={tx} />
+                  {i < recentTxs.length - 1 && <div style={{ height: 1, background: T.borderLight }} />}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
-
-      <div style={{ margin: '16px 24px 0' }}>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {cardActions.map((a) => (
-            <button key={a.label} onClick={a.onClick} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, background: T.surface, border: 'none', borderRadius: 16, padding: '14px 8px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.2)', WebkitTapHighlightColor: 'transparent' }}>
-              <Icon name={a.icon} size={20} color={T.accent} />
-              <span style={{ fontSize: 11, fontWeight: 500, color: T.muted }}>{a.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ padding: '20px 24px 0' }}>
-        <SectionHeader title="Card Activity" action="All" onAction={() => navigate('transactions', {}, 'forward')} />
-        <div style={{ background: T.surface, borderRadius: 20, padding: '4px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
-          {recentTxs.map((tx, i) => (
-            <div key={tx.id}>
-              <TxItem tx={tx} />
-              {i < recentTxs.length - 1 && <div style={{ height: 1, background: T.borderLight }} />}
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
