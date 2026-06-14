@@ -179,7 +179,6 @@ export const BankAPI = {
         note: note || undefined,
       };
 
-      const recipientKey = KEYS.USER.replace('mintcap_', 'mintcap_' + recipientUser.email.replace(/[^a-z0-9]/gi, '').toLowerCase() + '_');
       const recipientBalance = DB.get<number>('mintcap_balance_' + recipientUser.email.replace(/[^a-z0-9]/gi, '').toLowerCase(), 0);
       DB.set('mintcap_balance_' + recipientUser.email.replace(/[^a-z0-9]/gi, '').toLowerCase(), recipientBalance + amount);
 
