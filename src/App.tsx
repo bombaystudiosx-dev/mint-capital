@@ -127,54 +127,13 @@ export default function App() {
   const Screen = SCREENS[screen] || HomeScreen;
 
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 'clamp(18px, 4vw, 56px)',
-        background:
-          'radial-gradient(circle at 18% 12%, rgba(16,185,129,0.18), transparent 34%), radial-gradient(circle at 82% 8%, rgba(255,255,255,0.08), transparent 28%), linear-gradient(135deg, #050806 0%, #0A120E 46%, #020403 100%)',
-        overflow: 'hidden',
-      }}
-    >
-      <section
-        aria-label="Mint Capital app preview"
-        style={{
-          width: 'min(92vw, 523px)',
-          height: 'min(88vh, 874px)',
-          minHeight: 'min(760px, calc(100vh - 36px))',
-          maxHeight: 874,
-          borderRadius: 'clamp(24px, 4vw, 38px)',
-          padding: 1,
-          background: 'linear-gradient(145deg, rgba(255,255,255,0.20), rgba(16,185,129,0.20) 42%, rgba(255,255,255,0.06))',
-          boxShadow: '0 34px 90px rgba(0,0,0,0.42), 0 0 70px rgba(16,185,129,0.12)',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            height: '100%',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            background: bg,
-            borderRadius: 'inherit',
-            overflow: 'hidden',
-            backdropFilter: 'blur(22px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(22px) saturate(160%)',
-          }}
-        >
-          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative', WebkitOverflowScrolling: 'touch', minHeight: 0 }}>
-            <AnimWrapper direction={dir} animKey={animKey}>
-              <Screen navigate={navigate} goBack={goBack} {...params} />
-            </AnimWrapper>
-          </div>
-          {showNav ? <BottomNav active={screen} navigate={navigate} /> : <div style={{ height: 34, background: bg, flexShrink: 0 }} />}
-        </div>
-      </section>
-    </main>
+    <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', background: bg, overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative', WebkitOverflowScrolling: 'touch', minHeight: 0 }}>
+        <AnimWrapper direction={dir} animKey={animKey}>
+          <Screen navigate={navigate} goBack={goBack} {...params} />
+        </AnimWrapper>
+      </div>
+      {showNav ? <BottomNav active={screen} navigate={navigate} /> : <div style={{ height: 34, background: bg, flexShrink: 0 }} />}
+    </div>
   );
 }
