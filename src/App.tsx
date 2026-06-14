@@ -1,6 +1,5 @@
 // Main App router + transitions — ported from bank-app.jsx.
-// The dev-only tweaks panel from the prototype is intentionally omitted; the app
-// renders inside an iOS device frame as a presentation shell.
+// The dev-only tweaks panel from the prototype is intentionally omitted.
 
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -8,7 +7,6 @@ import { T } from './theme';
 import { initKYC } from './lib/kyc';
 import { initAdmin } from './lib/admin';
 import { BottomNav } from './components/ui';
-import { IOSDevice } from './components/ios/IOSDevice';
 import type { NavDirection, ScreenProps } from './types';
 
 import { SplashScreen, OnboardingScreen, LoginScreen, SignUpScreen, ForgotScreen } from './screens/auth';
@@ -129,17 +127,13 @@ export default function App() {
   const Screen = SCREENS[screen] || HomeScreen;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', width: '100%', padding: '24px 0' }}>
-      <IOSDevice dark>
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: bg, overflow: 'hidden' }}>
-          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative', WebkitOverflowScrolling: 'touch', minHeight: 0 }}>
-            <AnimWrapper direction={dir} animKey={animKey}>
-              <Screen navigate={navigate} goBack={goBack} {...params} />
-            </AnimWrapper>
-          </div>
-          {showNav ? <BottomNav active={screen} navigate={navigate} /> : <div style={{ height: 34, background: bg, flexShrink: 0 }} />}
-        </div>
-      </IOSDevice>
+    <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', background: bg, overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative', WebkitOverflowScrolling: 'touch', minHeight: 0 }}>
+        <AnimWrapper direction={dir} animKey={animKey}>
+          <Screen navigate={navigate} goBack={goBack} {...params} />
+        </AnimWrapper>
+      </div>
+      {showNav ? <BottomNav active={screen} navigate={navigate} /> : <div style={{ height: 34, background: bg, flexShrink: 0 }} />}
     </div>
   );
 }
