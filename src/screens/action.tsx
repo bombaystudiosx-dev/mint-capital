@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { T } from '../theme';
-import { Auth, BankAPI, V, F } from '../lib/data';
+import { Auth, BankAPI, V, F, isUserOnPlatform } from '../lib/data';
 import { Icon } from '../components/Icon';
 import { Btn, InputField, PageHeader } from '../components/ui';
 import type { Recipient, ScreenProps } from '../types';
@@ -98,6 +98,8 @@ export function AddRecipientScreen({ navigate }: ScreenProps) {
     }, 700);
   };
 
+  const isOnPlatform = f.email && V.email(f.email) && isUserOnPlatform(f.email);
+
   return (
     <div style={{ height: '100%', background: T.surface, display: 'flex', flexDirection: 'column', paddingTop: 0, overflowY: 'auto' }}>
       <PageHeader title="Add recipient" onBack={() => navigate('transfer', {}, 'back')} bg={T.surface} />
@@ -105,7 +107,15 @@ export function AddRecipientScreen({ navigate }: ScreenProps) {
         <p style={{ margin: '0 0 28px', fontSize: 15, color: T.muted, lineHeight: 1.5 }}>Add a new person to send money to.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 28 }}>
           <InputField label="Full name" value={f.name} onChange={(v) => set('name', v)} placeholder="Alex Johnson" error={errors.name} />
-          <InputField label="Email address" value={f.email} onChange={(v) => set('email', v)} type="email" placeholder="alex@example.com" error={errors.email} />
+          <div>
+            <InputField label="Email address" value={f.email} onChange={(v) => set('email', v)} type="email" placeholder="alex@example.com" error={errors.email} />
+            {isOnPlatform && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, padding: '10px 12px', background: T.accentLight, borderRadius: 12 }}>
+                <Icon name="check" size={16} color={T.accent} />
+                <span style={{ fontSize: 13, color: T.accent, fontWeight: 500 }}>User on Mint Capital</span>
+              </div>
+            )}
+          </div>
         </div>
         <Btn onClick={submit} loading={loading}>Continue</Btn>
       </div>
@@ -202,6 +212,7 @@ export function ConfirmTransferScreen(props: ScreenProps) {
   const fee = 0.0;
   const total = (amount || 0) + fee;
   const user = Auth.getUser();
+  const isOnPlatform = recipient && isUserOnPlatform(recipient.email);
 
   const confirm = () => {
     setLoading(true);
@@ -250,6 +261,15 @@ export function ConfirmTransferScreen(props: ScreenProps) {
             </>
           )}
         </div>
+        {isOnPlatform && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: T.accentLight, borderRadius: 16, padding: '12px 16px', marginBottom: 20, border: `1px solid ${T.accent}44` }}>
+            <Icon name="check" size={18} color={T.accent} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.accent }}>Instant transfer</div>
+              <div style={{ fontSize: 12, color: T.accent, opacity: 0.8 }}>Money arrives immediately</div>
+            </div>
+          </div>
+        )}
         <Btn onClick={confirm} loading={loading} variant="success">
           <Icon name="check" size={18} color="#fff" />
           Confirm & Send

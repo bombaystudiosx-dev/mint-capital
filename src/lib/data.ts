@@ -141,6 +141,10 @@ export const BankAPI = {
   getUnread: (): number => DB.get<Notif[]>(KEYS.NOTIFS, []).filter((n) => !n.read).length,
 
   sendMoney: (recipient: Recipient, amount: number, note = ''): Tx => {
+    const currentUser = Auth.getUser();
+    const users = DB.get<User[]>(KEYS.USERS, []);
+    const recipientUser = users.find((u) => u.email.trim().toLowerCase() === recipient.email.trim().toLowerCase());
+
     const tx: Tx = {
       id: 'tx' + Date.now(),
       type: 'debit',
@@ -151,6 +155,7 @@ export const BankAPI = {
       icon: 'transfer',
       note,
     };
+
     const txs = BankAPI.getTransactions();
     txs.unshift(tx);
     DB.set(KEYS.TRANSACTIONS, txs);
@@ -161,6 +166,40 @@ export const BankAPI = {
       cards[0].balance = bal;
       DB.set(KEYS.CARDS, cards);
     }
+
+    if (recipientUser) {
+      const incomeTx: Tx = {
+        id: 'tx' + Date.now() + 'in',
+        type: 'credit',
+        name: 'Transfer from ' + (currentUser?.name || 'Unknown'),
+        category: 'Transfer',
+        amount: amount,
+        date: new Date().toISOString().split('T')[0],
+        icon: 'transfer',
+        note: note || undefined,
+      };
+
+      const recipientKey = KEYS.USER.replace('mintcap_', 'mintcap_' + recipientUser.email.replace(/[^a-z0-9]/gi, '').toLowerCase() + '_');
+      const recipientBalance = DB.get<number>('mintcap_balance_' + recipientUser.email.replace(/[^a-z0-9]/gi, '').toLowerCase(), 0);
+      DB.set('mintcap_balance_' + recipientUser.email.replace(/[^a-z0-9]/gi, '').toLowerCase(), recipientBalance + amount);
+
+      const recipientTxs = DB.get<Tx[]>('mintcap_txs_' + recipientUser.email.replace(/[^a-z0-9]/gi, '').toLowerCase(), []);
+      recipientTxs.unshift(incomeTx);
+      DB.set('mintcap_txs_' + recipientUser.email.replace(/[^a-z0-9]/gi, '').toLowerCase(), recipientTxs);
+
+      const recipientNotifs = DB.get<Notif[]>('mintcap_notifs_' + recipientUser.email.replace(/[^a-z0-9]/gi, '').toLowerCase(), []);
+      const notif: Notif = {
+        id: 'n' + Date.now(),
+        type: 'credit',
+        title: 'Money received',
+        body: `You received ${F.money(amount)} from ${currentUser?.name || 'Someone'}`,
+        time: 'now',
+        read: false,
+      };
+      recipientNotifs.unshift(notif);
+      DB.set('mintcap_notifs_' + recipientUser.email.replace(/[^a-z0-9]/gi, '').toLowerCase(), recipientNotifs);
+    }
+
     return tx;
   },
 
@@ -198,6 +237,17 @@ export const BankAPI = {
     DB.set(KEYS.NOTIFS, ns);
   },
 };
+
+// ── Helper functions ──────────────────────────────────────────
+export function isUserOnPlatform(email: string): boolean {
+  const users = DB.get<User[]>(KEYS.USERS, []);
+  return users.some((u) => u.email.trim().toLowerCase() === email.trim().toLowerCase());
+}
+
+export function getUserByEmail(email: string): User | null {
+  const users = DB.get<User[]>(KEYS.USERS, []);
+  return users.find((u) => u.email.trim().toLowerCase() === email.trim().toLowerCase()) || null;
+}
 
 // ── Validation ────────────────────────────────────────────────
 export const V = {
